@@ -9,6 +9,7 @@ const average = (rows: { actualCtr: number }[]) => rows.length ? (rows.reduce((s
 export function ImportHistory({ brand, existing, onImport }: {
   brand: Brand;
   existing: Memory[];
+  totalCount: number;
   onImport: (rows: ImportedCampaign[]) => void;
 }) {
   const [preview, setPreview] = useState<{ brandId: string; rows: ImportedCampaign[]; filename: string } | null>(null);
