@@ -47,10 +47,14 @@ const SAMPLE: Record<string, Brief> = {
   sari: { brandId: "sari", audience: "women 24-40, metros", channel: "Instagram Reels", festival: "Diwali", goal: "First-order lift" },
 };
 
+function sampleFor(id: string): Brief {
+  return SAMPLE[id] ?? SAMPLE["kopi"]!;
+}
+
 function Dashboard() {
   const [memories, setMemories] = useState<Memory[]>([]);
   const [brandId, setBrandId] = useState("kopi");
-  const [brief, setBrief] = useState<Brief>(SAMPLE.kopi!);
+  const [brief, setBrief] = useState<Brief>(sampleFor("kopi"));
   const [memoryOn, setMemoryOn] = useState(true);
   const [result, setResult] = useState<GenerationResult | null>(null);
   const [running, setRunning] = useState(false);
