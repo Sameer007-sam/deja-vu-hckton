@@ -1,17 +1,26 @@
 import type { Brand, Memory } from "./types";
 
-export const BRANDS: Brand[] = [
-  { id: "kopi", name: "Kopi Kulture", category: "Specialty coffee", tone: "warm, witty, ritual-led" },
-  { id: "biryani", name: "Biryani Bhai", category: "Biryani restaurant", tone: "loud, hungry, family-first" },
-  { id: "sari", name: "Sari & Sole", category: "Fashion", tone: "elegant, modern, festive" },
+export interface SeedBrand {
+  key: string;
+  name: string;
+  category: string;
+  tone: string;
+}
+
+export const SEED_BRANDS: SeedBrand[] = [
+  { key: "kopi", name: "Kopi Kulture", category: "Specialty coffee", tone: "warm, witty, ritual-led" },
+  { key: "biryani", name: "Biryani Bhai", category: "Biryani restaurant", tone: "loud, hungry, family-first" },
+  { key: "sari", name: "Sari & Sole", category: "Fashion", tone: "elegant, modern, festive" },
 ];
 
-type SeedMemory = Omit<Memory, "id" | "createdAt">;
+export interface SeedMemory extends Omit<Memory, "id" | "brandId" | "createdAt"> {
+  brandKey: string;
+}
 
-const SEED: SeedMemory[] = [
+export const SEED: SeedMemory[] = [
   // Kopi Kulture
   {
-    brandId: "kopi",
+    brandKey: "kopi",
     hook: "Light the whole street, one cup.",
     body: "Diwali mornings start with a filter pour. Free second cup for the family.",
     audience: "18-34, tier-2 cities",
@@ -25,7 +34,7 @@ const SEED: SeedMemory[] = [
     year: 2025,
   },
   {
-    brandId: "kopi",
+    brandKey: "kopi",
     hook: "Flat 12% off every cup, no strings.",
     body: "Diwali sale. Use code SAVE12 on all beverages.",
     audience: "18-34, tier-2 cities",
@@ -39,7 +48,7 @@ const SEED: SeedMemory[] = [
     year: 2025,
   },
   {
-    brandId: "kopi",
+    brandKey: "kopi",
     hook: "First harvest, first pour.",
     body: "Sankranti belongs to the farmers. This week's beans are theirs too.",
     audience: "25-40, Hyderabad offices",
@@ -53,7 +62,7 @@ const SEED: SeedMemory[] = [
     year: 2025,
   },
   {
-    brandId: "kopi",
+    brandKey: "kopi",
     hook: "Second innings needs a second cup.",
     body: "IPL late nights, cold brew on 20-minute delivery.",
     audience: "18-30, cricket fans",
@@ -67,7 +76,7 @@ const SEED: SeedMemory[] = [
     year: 2025,
   },
   {
-    brandId: "kopi",
+    brandKey: "kopi",
     hook: "Brewed near the Bonalu route.",
     body: "Free water and filter coffee for anyone walking the procession.",
     audience: "all ages, Secunderabad",
@@ -81,7 +90,7 @@ const SEED: SeedMemory[] = [
     year: 2025,
   },
   {
-    brandId: "kopi",
+    brandKey: "kopi",
     hook: "Buy one latte, get one free — today only.",
     body: "Rival chain's Diwali push on Reels.",
     audience: "18-34, tier-2 cities",
@@ -98,7 +107,7 @@ const SEED: SeedMemory[] = [
 
   // Biryani Bhai
   {
-    brandId: "biryani",
+    brandKey: "biryani",
     hook: "Your table, our biryani, their gossip.",
     body: "Eid dawats come home in a 6-person handi.",
     audience: "families, 25-50, Hyderabad",
@@ -112,7 +121,7 @@ const SEED: SeedMemory[] = [
     year: 2025,
   },
   {
-    brandId: "biryani",
+    brandKey: "biryani",
     hook: "Ugadi thali, biryani included.",
     body: "Six tastes of Ugadi, plus the one everyone actually came for.",
     audience: "families, 25-50, Hyderabad",
@@ -126,7 +135,7 @@ const SEED: SeedMemory[] = [
     year: 2025,
   },
   {
-    brandId: "biryani",
+    brandKey: "biryani",
     hook: "Cheapest biryani in the city.",
     body: "₹99 mini biryani, limited stock.",
     audience: "students, 18-24",
@@ -140,7 +149,7 @@ const SEED: SeedMemory[] = [
     year: 2025,
   },
   {
-    brandId: "biryani",
+    brandKey: "biryani",
     hook: "Every wicket, one more plate.",
     body: "IPL match nights: family bucket at match-start price.",
     audience: "18-30, cricket fans",
@@ -154,7 +163,7 @@ const SEED: SeedMemory[] = [
     year: 2025,
   },
   {
-    brandId: "biryani",
+    brandKey: "biryani",
     hook: "Free delivery on every IPL order.",
     body: "Rival's match-night campaign.",
     audience: "18-30, cricket fans",
@@ -171,7 +180,7 @@ const SEED: SeedMemory[] = [
 
   // Sari & Sole
   {
-    brandId: "sari",
+    brandKey: "sari",
     hook: "The drape you'll be asked about all night.",
     body: "Diwali drop: 14 handwoven weaves, 40 pieces each.",
     audience: "women 24-40, metros",
@@ -185,7 +194,7 @@ const SEED: SeedMemory[] = [
     year: 2025,
   },
   {
-    brandId: "sari",
+    brandKey: "sari",
     hook: "Colour your feed, not your shirt.",
     body: "Holi whites, stain-safe fabric.",
     audience: "women 24-40, metros",
@@ -199,7 +208,7 @@ const SEED: SeedMemory[] = [
     year: 2025,
   },
   {
-    brandId: "sari",
+    brandKey: "sari",
     hook: "New year, new nine yards.",
     body: "Ugadi capsule in raw mango yellow.",
     audience: "women 24-40, Telugu states",
@@ -213,7 +222,7 @@ const SEED: SeedMemory[] = [
     year: 2025,
   },
   {
-    brandId: "sari",
+    brandKey: "sari",
     hook: "End of season, everything must go.",
     body: "Sankranti clearance, up to 60% off.",
     audience: "women 24-40, Telugu states",
@@ -227,7 +236,7 @@ const SEED: SeedMemory[] = [
     year: 2025,
   },
   {
-    brandId: "sari",
+    brandKey: "sari",
     hook: "Influencer-led Diwali try-on haul.",
     body: "Rival brand's creator campaign.",
     audience: "women 24-40, metros",
@@ -242,12 +251,3 @@ const SEED: SeedMemory[] = [
     year: 2025,
   },
 ];
-
-export function seedMemories(): Memory[] {
-  const base = Date.now() - SEED.length * 86_400_000;
-  return SEED.map((m, i) => ({
-    ...m,
-    id: `seed-${i}`,
-    createdAt: base + i * 86_400_000,
-  }));
-}
