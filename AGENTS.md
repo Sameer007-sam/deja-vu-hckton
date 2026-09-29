@@ -14,3 +14,4 @@
 - Memory layer is isolated behind `retain()` / `recall()` / `reflect()` in `src/lib/memory.ts`; banks persist per anonymous browser session in `src/lib/store.ts` so every visitor is isolated.
 - Only copywriting goes over the network (`src/lib/copy.functions.ts`); it must always degrade to the local template generator so the UI never blanks.
 - Colors, fonts and radii live as tokens in `src/styles.css`; components never hardcode color values.
+- Imported campaign history is parsed and validated locally before explicit confirmation, then added to the selected brand's browser bank; no uploaded file is sent over the network to preserve visitor isolation.
