@@ -12,12 +12,14 @@ import { LearningCurve } from "@/components/dejavu/LearningCurve";
 import { CompetitorForm, ReflectPanel, RetainResult, WhyPanel } from "@/components/dejavu/Panels";
 import { Tour } from "@/components/dejavu/Tour";
 import { Info } from "@/components/dejavu/Info";
+import { ImportHistory } from "@/components/dejavu/ImportHistory";
 
 import { BRANDS } from "@/lib/seed";
 import { loadMemories, markTourSeen, resetDemo, saveMemories, tourSeen } from "@/lib/store";
 import { dejaVuScore, localDraft, plan, recall, reflect, withoutMemoryDraft } from "@/lib/memory";
 import { generateCopy } from "@/lib/copy.functions";
 import type { Brief, GenerationResult, Memory } from "@/lib/types";
+import { retain } from "@/lib/memory";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -307,6 +309,21 @@ function Dashboard() {
           </section>
 
           <ReflectPanel insights={insights} onReflect={() => setInsights(reflect(memories, brandId))} />
+          <ImportHistory
+            brand={brand}
+            existing={bank}
+            onImport={(rows) => {
+              const now = Date.now();
+              const added = rows.map((row, index): Memory => ({ ...row, id: `i_${now}_${index}`, brandId, createdAt: now + index }));
+              const next = added.reduce((all, row) => retain(all, row), memories);
+              setMemories(next);
+              saveMemories(next);
+              setInsights(reflect(next, brandId));
+              setResult(null);
+              setPending(null);
+              toast.success(`${rows.length} campaigns added to ${brand.name}. Insights updated.`);
+            }}
+          />
           <CompetitorForm brandId={brandId} onLog={logRival} />
 
           <footer className="mt-8 pb-4 text-center text-xs text-quiet">

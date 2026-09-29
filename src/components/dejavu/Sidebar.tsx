@@ -37,8 +37,8 @@ export function Sidebar({
     <aside className="w-full shrink-0 border-line p-4 lg:sticky lg:top-0 lg:h-screen lg:w-60 lg:overflow-y-auto lg:border-r">
       <div className="flex items-start justify-between">
         <div>
-          <div className="font-display text-2xl font-extrabold tracking-tight">
-            Déjà<span className="text-spark">.</span>
+          <div className="font-display text-2xl font-extrabold">
+            Déjà <span className="text-spark">Vu</span>
           </div>
           <div className="mt-1 text-[10px] tracking-[0.2em] text-quiet uppercase">memory-first marketing</div>
         </div>
@@ -123,6 +123,9 @@ export function Sidebar({
         </a>
         <a className="rounded-lg px-2 py-1.5 hover:text-ink" href="#timeline">
           Timeline &amp; learning
+        </a>
+        <a className="rounded-lg px-2 py-1.5 hover:text-ink" href="#import-history">
+          Import history
         </a>
         <Link className="rounded-lg px-2 py-1.5 hover:text-ink" to="/how-it-works">
           How it works

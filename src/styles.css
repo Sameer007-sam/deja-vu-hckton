@@ -64,20 +64,20 @@
 :root {
   --radius: 1rem;
 
-  --paper: oklch(0.973 0.028 92);
+  --paper: oklch(0.969 0.035 91);
   --ink: oklch(0.255 0.021 73);
   --win: oklch(0.63 0.122 165);
   --flop: oklch(0.6 0.192 33);
   --spark: oklch(0.78 0.153 74);
   --quiet: oklch(0.58 0.027 80);
-  --line: oklch(0.905 0.028 88);
-  --soft: oklch(0.945 0.03 90);
+  --line: oklch(0.89 0.04 88);
+  --soft: oklch(0.932 0.049 90);
 
   --background: var(--paper);
   --foreground: var(--ink);
-  --card: oklch(1 0 0);
+  --card: oklch(0.987 0.025 92);
   --card-foreground: var(--ink);
-  --popover: oklch(1 0 0);
+  --popover: oklch(0.987 0.025 92);
   --popover-foreground: var(--ink);
   --primary: var(--ink);
   --primary-foreground: oklch(0.985 0.01 90);
