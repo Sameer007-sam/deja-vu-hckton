@@ -148,10 +148,12 @@ export function reflect(memories: Memory[], brandId: string): string[] {
   });
   const avg = (xs: number[]) => xs.reduce((s, x) => s + x, 0) / xs.length;
 
-  const bestChannel = [...byChannel.entries()].sort((a, b) => avg(b[1]) - avg(a[1]))[0];
+  const channels = [...byChannel.entries()].sort((a, b) => avg(b[1]) - avg(a[1]));
+  const bestChannel = channels.find(([, xs]) => xs.length > 1) ?? channels[0];
   if (bestChannel) {
+    const n = bestChannel[1].length;
     insights.push(
-      `${bestChannel[0]} is this brand's strongest channel so far — ${avg(bestChannel[1]).toFixed(1)}% average CTR across ${bestChannel[1].length} campaigns.`,
+      `${bestChannel[0]} is this brand's strongest channel so far — ${avg(bestChannel[1]).toFixed(1)}% average CTR across ${n} campaign${n === 1 ? "" : "s"}.`,
     );
   }
 
