@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { PlayCircle } from "lucide-react";
@@ -14,14 +14,13 @@ import { Tour } from "@/components/dejavu/Tour";
 import { Info } from "@/components/dejavu/Info";
 import { ImportHistory } from "@/components/dejavu/ImportHistory";
 
-import { BRANDS } from "@/lib/seed";
-import { loadMemories, markTourSeen, resetDemo, saveMemories, tourSeen } from "@/lib/store";
+import { addMemories, addMemory, createBrand, fetchBank, MEMORY_CAP, resetDemo, seedDemo, signOut } from "@/lib/db";
+import { markTourSeen, tourSeen } from "@/lib/store";
 import { dejaVuScore, localDraft, plan, recall, reflect, withoutMemoryDraft } from "@/lib/memory";
 import { generateCopy } from "@/lib/copy.functions";
-import type { Brief, GenerationResult, Memory } from "@/lib/types";
-import { retain } from "@/lib/memory";
+import type { Brand, Brief, GenerationResult, Memory } from "@/lib/types";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [
       { title: "Marketing Déjà Vu — the marketing agent that remembers" },
@@ -43,20 +42,29 @@ export const Route = createFileRoute("/")({
   component: Dashboard,
 });
 
-const SAMPLE: Record<string, Brief> = {
-  kopi: { brandId: "kopi", audience: "18-34, tier-2 cities", channel: "Instagram Reels", festival: "Diwali", goal: "First-order lift" },
-  biryani: { brandId: "biryani", audience: "families, 25-50, Hyderabad", channel: "WhatsApp", festival: "Eid", goal: "Footfall" },
-  sari: { brandId: "sari", audience: "women 24-40, metros", channel: "Instagram Reels", festival: "Diwali", goal: "First-order lift" },
+const SAMPLE: Record<string, Omit<Brief, "brandId">> = {
+  "Kopi Kulture": { audience: "18-34, tier-2 cities", channel: "Instagram Reels", festival: "Diwali", goal: "First-order lift" },
+  "Biryani Bhai": { audience: "families, 25-50, Hyderabad", channel: "WhatsApp", festival: "Eid", goal: "Footfall" },
+  "Sari & Sole": { audience: "women 24-40, metros", channel: "Instagram Reels", festival: "Diwali", goal: "First-order lift" },
 };
 
-function sampleFor(id: string): Brief {
-  return SAMPLE[id] ?? SAMPLE["kopi"]!;
+function sampleFor(brand?: Brand): Brief {
+  const s = (brand && SAMPLE[brand.name]) ?? {
+    audience: "18-34",
+    channel: "Instagram Reels",
+    festival: "Diwali",
+    goal: "First-order lift",
+  };
+  return { brandId: brand?.id ?? "", ...s };
 }
 
 function Dashboard() {
+  const navigate = useNavigate();
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [memories, setMemories] = useState<Memory[]>([]);
-  const [brandId, setBrandId] = useState("kopi");
-  const [brief, setBrief] = useState<Brief>(sampleFor("kopi"));
+  const [loadingBank, setLoadingBank] = useState(true);
+  const [brandId, setBrandId] = useState("");
+  const [brief, setBrief] = useState<Brief>(sampleFor());
   const [memoryOn, setMemoryOn] = useState(true);
   const [result, setResult] = useState<GenerationResult | null>(null);
   const [running, setRunning] = useState(false);
@@ -65,13 +73,32 @@ function Dashboard() {
   const [tour, setTour] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
-  const brand = BRANDS.find((b) => b.id === brandId) ?? BRANDS[0]!;
-
   useEffect(() => {
-    setMemories(loadMemories());
-    if (!tourSeen()) setTour(true);
+    let cancelled = false;
+    (async () => {
+      try {
+        let bank = await fetchBank();
+        if (bank.brands.length === 0) bank = await seedDemo();
+        if (cancelled) return;
+        setBrands(bank.brands);
+        setMemories(bank.memories);
+        const first = bank.brands[0];
+        if (first) {
+          setBrandId(first.id);
+          setBrief(sampleFor(first));
+        }
+        if (!tourSeen()) setTour(true);
+      } catch {
+        if (!cancelled) toast.error("Could not load your memory banks. Please refresh.");
+      } finally {
+        if (!cancelled) setLoadingBank(false);
+      }
+    })();
     const stored = window.localStorage.getItem("dejavu.theme");
     if (stored === "dark" || stored === "light") setTheme(stored);
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -79,7 +106,9 @@ function Dashboard() {
     window.localStorage.setItem("dejavu.theme", theme);
   }, [theme]);
 
-  const bank = useMemo(() => memories.filter((m) => m.brandId === brandId), [memories, brandId]);
+  const brand = brands.find((b) => b.id === brandId) ?? brands[0];
+
+  const bank = useMemo(() => memories.filter((m) => m.brandId === brand?.id), [memories, brand]);
   const counts = useMemo(
     () => ({
       retained: bank.length,
@@ -100,7 +129,7 @@ function Dashboard() {
   );
 
   const run = useCallback(async () => {
-    if (running) return;
+    if (running || !brand) return;
     setRunning(true);
     setResult(null);
     setPending(null);
@@ -163,45 +192,67 @@ function Dashboard() {
   }, [brand, brief, memories, memoryOn, running]);
 
   const runSample = () => {
-    const sample = sampleFor(brandId);
-    setBrief(sample);
+    setBrief(sampleFor(brand));
     setMemoryOn(true);
     setTimeout(() => void run(), 60);
   };
 
-  const retainResult = (actualCtr: number) => {
-    if (!pending) return;
-    const memory: Memory = {
-      id: `m_${Date.now()}`,
-      brandId,
-      hook: pending.hook,
-      body: pending.body,
-      audience: brief.audience,
-      channel: brief.channel,
-      festival: brief.festival,
-      goal: brief.goal,
-      predictedCtr: pending.predictedCtr,
-      actualCtr,
-      outcome: actualCtr >= 2.5 ? "win" : "flop",
-      source: "own",
-      year: new Date().getFullYear(),
-      createdAt: Date.now(),
-    };
-    const next = [memory, ...memories];
-    setMemories(next);
-    saveMemories(next);
-    setPending(null);
-    toast.success(
-      actualCtr >= 2.5 ? "Retained as a win — it will be recalled next time." : "Retained as a flop — it will be avoided.",
-    );
+  const retainResult = async (actualCtr: number) => {
+    if (!pending || !brand) return;
+    try {
+      const saved = await addMemory(brand.id, {
+        hook: pending.hook,
+        body: pending.body,
+        audience: brief.audience,
+        channel: brief.channel,
+        festival: brief.festival,
+        goal: brief.goal,
+        predictedCtr: pending.predictedCtr,
+        actualCtr,
+        outcome: actualCtr >= 2.5 ? "win" : "flop",
+        source: "own",
+        year: new Date().getFullYear(),
+      });
+      setMemories((all) => [saved, ...all]);
+      setPending(null);
+      toast.success(
+        actualCtr >= 2.5 ? "Retained as a win — it will be recalled next time." : "Retained as a flop — it will be avoided.",
+      );
+    } catch {
+      toast.error("Could not save that result. Please try again.");
+    }
   };
 
-  const logRival = (partial: Omit<Memory, "id" | "createdAt">) => {
-    const next = [{ ...partial, id: `c_${Date.now()}`, createdAt: Date.now() }, ...memories];
-    setMemories(next);
-    saveMemories(next);
-    toast.success("Rival campaign retained in this brand's bank.");
+  const logRival = async (partial: Omit<Memory, "id" | "createdAt">) => {
+    try {
+      const saved = await addMemory(partial.brandId, {
+        hook: partial.hook,
+        body: partial.body,
+        audience: partial.audience,
+        channel: partial.channel,
+        festival: partial.festival,
+        goal: partial.goal,
+        predictedCtr: partial.predictedCtr,
+        actualCtr: partial.actualCtr,
+        outcome: partial.outcome,
+        source: "competitor",
+        ...(partial.competitor ? { competitor: partial.competitor } : {}),
+        year: partial.year,
+      });
+      setMemories((all) => [saved, ...all]);
+      toast.success("Rival campaign retained in this brand's bank.");
+    } catch {
+      toast.error("Could not save that rival campaign. Please try again.");
+    }
   };
+
+  if (loadingBank || !brand) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background font-body text-foreground">
+        <p className="text-sm text-quiet">Opening your memory banks…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background font-body text-foreground">
@@ -214,13 +265,28 @@ function Dashboard() {
       />
       <div className="flex flex-col lg:flex-row">
         <Sidebar
+          brands={brands}
           brand={brand}
           onBrand={(id) => {
             setBrandId(id);
-            setBrief(sampleFor(id));
+            setBrief(sampleFor(brands.find((b) => b.id === id)));
             setResult(null);
             setPending(null);
             setInsights([]);
+          }}
+          onNewBrand={async (name, tone, industry) => {
+            try {
+              const created = await createBrand(name, tone, industry);
+              setBrands((all) => [...all, created]);
+              setBrandId(created.id);
+              setBrief(sampleFor(created));
+              setResult(null);
+              setPending(null);
+              setInsights([]);
+              toast.success(`${created.name} has its own memory bank now.`);
+            } catch {
+              toast.error("Could not create that brand. Please try again.");
+            }
           }}
           dejaVu={result?.dejaVuScore ?? live.dejaVu}
           predictedCtr={result?.withMemory.predictedCtr ?? live.predicted}
@@ -228,14 +294,29 @@ function Dashboard() {
           theme={theme}
           onTheme={() => setTheme(theme === "dark" ? "light" : "dark")}
           onReset={() => {
-            const seeded = resetDemo();
-            setMemories(seeded);
-            setResult(null);
-            setPending(null);
-            setInsights([]);
-            toast.success("Demo reset — three brands, 2025 campaigns and rival logs restored.");
+            void (async () => {
+              try {
+                const bank = await resetDemo();
+                setBrands(bank.brands);
+                setMemories(bank.memories);
+                const first = bank.brands[0];
+                if (first) {
+                  setBrandId(first.id);
+                  setBrief(sampleFor(first));
+                }
+                setResult(null);
+                setPending(null);
+                setInsights([]);
+                toast.success("Demo reset — three brands, 2025 campaigns and rival logs restored.");
+              } catch {
+                toast.error("Could not reset the demo. Please try again.");
+              }
+            })();
           }}
           onReplayTour={() => setTour(true)}
+          onSignOut={() => {
+            void signOut().then(() => navigate({ to: "/auth" }));
+          }}
         />
 
         <main className="mx-auto w-full max-w-5xl flex-1 p-4 sm:p-6">
@@ -291,7 +372,7 @@ function Dashboard() {
           <div className="mt-6 text-[10px] tracking-[0.18em] text-quiet uppercase">Same brief, two agents</div>
           <Comparison result={result} loading={running} memoryOn={memoryOn} />
 
-          <RetainResult pending={pending} onRetain={retainResult} />
+          <RetainResult pending={pending} onRetain={(ctr) => void retainResult(ctr)} />
 
           <section id="timeline" className="mt-4 rounded-3xl border border-line bg-card p-5">
             <h2 className="font-display text-lg font-bold">Memory timeline</h2>
@@ -308,27 +389,51 @@ function Dashboard() {
             </div>
           </section>
 
-          <ReflectPanel insights={insights} onReflect={() => setInsights(reflect(memories, brandId))} />
+          <ReflectPanel insights={insights} onReflect={() => setInsights(reflect(memories, brand.id))} />
           <ImportHistory
             brand={brand}
             existing={bank}
             totalCount={memories.length}
             onImport={(rows) => {
-              const now = Date.now();
-              const added = rows.map((row, index): Memory => ({ ...row, id: `i_${now}_${index}`, brandId, createdAt: now + index }));
-              const next = added.reduce((all, row) => retain(all, row), memories);
-              setMemories(next);
-              saveMemories(next);
-              setInsights(reflect(next, brandId));
-              setResult(null);
-              setPending(null);
-              toast.success(`${rows.length} campaigns added to ${brand.name}. Insights updated.`);
+              void (async () => {
+                if (memories.length + rows.length > MEMORY_CAP) {
+                  toast.error(`The memory bank holds ${MEMORY_CAP} campaigns across all brands.`);
+                  return;
+                }
+                try {
+                  const saved = await addMemories(
+                    brand.id,
+                    rows.map((row) => ({
+                      hook: row.hook,
+                      body: row.body,
+                      audience: row.audience,
+                      channel: row.channel,
+                      festival: row.festival,
+                      goal: row.goal,
+                      predictedCtr: row.predictedCtr,
+                      actualCtr: row.actualCtr,
+                      outcome: row.outcome,
+                      source: row.source,
+                      ...(row.competitor ? { competitor: row.competitor } : {}),
+                      year: row.year,
+                    })),
+                  );
+                  const next = [...saved, ...memories];
+                  setMemories(next);
+                  setInsights(reflect(next, brand.id));
+                  setResult(null);
+                  setPending(null);
+                  toast.success(`${rows.length} campaigns added to ${brand.name}. Insights updated.`);
+                } catch {
+                  toast.error("Could not save the imported campaigns. Please try again.");
+                }
+              })();
             }}
           />
-          <CompetitorForm brandId={brandId} onLog={logRival} />
+          <CompetitorForm brandId={brand.id} onLog={(partial) => void logRival(partial)} />
 
           <footer className="mt-8 pb-4 text-center text-xs text-quiet">
-            Built for HackwithHyderabad 3.0 · memories live in your own browser bank ({counts.retained} retained)
+            Built for HackwithHyderabad 3.0 · your banks live in your own cloud database ({counts.retained} retained)
           </footer>
         </main>
       </div>

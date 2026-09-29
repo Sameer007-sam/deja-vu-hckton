@@ -38,6 +38,7 @@ export interface Brand {
   name: string;
   category: string;
   tone: string;
+  isDemo?: boolean;
 }
 
 export interface Memory {
