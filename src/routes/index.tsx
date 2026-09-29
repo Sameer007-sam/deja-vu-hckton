@@ -161,7 +161,7 @@ function Dashboard() {
   }, [brand, brief, memories, memoryOn, running]);
 
   const runSample = () => {
-    const sample = SAMPLE[brandId] ?? SAMPLE.kopi!;
+    const sample = sampleFor(brandId);
     setBrief(sample);
     setMemoryOn(true);
     setTimeout(() => void run(), 60);
@@ -215,7 +215,7 @@ function Dashboard() {
           brand={brand}
           onBrand={(id) => {
             setBrandId(id);
-            setBrief(SAMPLE[id] ?? { ...brief, brandId: id });
+            setBrief(sampleFor(id));
             setResult(null);
             setPending(null);
             setInsights([]);
