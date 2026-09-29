@@ -1,18 +1,20 @@
 import { Link } from "@tanstack/react-router";
-import { Moon, RotateCcw, Sun } from "lucide-react";
-import { BRANDS } from "@/lib/seed";
+import { LogOut, Moon, Plus, RotateCcw, Sun } from "lucide-react";
+import { useState } from "react";
 import type { Brand } from "@/lib/types";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Info } from "./Info";
 
-const DOTS: Record<string, string> = {
-  kopi: "bg-win",
-  biryani: "bg-spark",
-  sari: "bg-flop",
-};
+const DOTS = ["bg-win", "bg-spark", "bg-flop"];
 
 interface Props {
+  brands: Brand[];
   brand: Brand;
   onBrand: (id: string) => void;
+  onNewBrand: (name: string, tone: string, industry: string) => Promise<void>;
   dejaVu: number;
   predictedCtr: number;
   counts: { retained: number; wins: number; flops: number };
@@ -20,11 +22,14 @@ interface Props {
   onTheme: () => void;
   onReset: () => void;
   onReplayTour: () => void;
+  onSignOut: () => void;
 }
 
 export function Sidebar({
+  brands,
   brand,
   onBrand,
+  onNewBrand,
   dejaVu,
   predictedCtr,
   counts,
@@ -32,7 +37,29 @@ export function Sidebar({
   onTheme,
   onReset,
   onReplayTour,
+  onSignOut,
 }: Props) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [industry, setIndustry] = useState("");
+  const [tone, setTone] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function create(event: React.FormEvent) {
+    event.preventDefault();
+    if (saving || !name.trim()) return;
+    setSaving(true);
+    try {
+      await onNewBrand(name.trim(), tone.trim(), industry.trim());
+      setOpen(false);
+      setName("");
+      setIndustry("");
+      setTone("");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <aside className="w-full shrink-0 border-line p-4 lg:sticky lg:top-0 lg:h-screen lg:w-60 lg:overflow-y-auto lg:border-r">
       <div className="flex items-start justify-between">
@@ -51,9 +78,18 @@ export function Sidebar({
         </button>
       </div>
 
-      <div className="mt-5 text-[10px] tracking-[0.18em] text-quiet uppercase">Memory bank</div>
+      <div className="mt-5 flex items-center justify-between">
+        <span className="text-[10px] tracking-[0.18em] text-quiet uppercase">Memory banks</span>
+        <button
+          onClick={() => setOpen(true)}
+          aria-label="Create a new brand"
+          className="inline-flex items-center gap-1 rounded-full border border-line px-2 py-1 text-[11px] font-medium text-quiet transition-colors hover:bg-soft hover:text-ink focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        >
+          <Plus className="size-3" aria-hidden /> New brand
+        </button>
+      </div>
       <div role="radiogroup" aria-label="Brand memory bank" className="mt-2 flex flex-col gap-2">
-        {BRANDS.map((b) => {
+        {brands.map((b, i) => {
           const active = b.id === brand.id;
           return (
             <button
@@ -67,7 +103,7 @@ export function Sidebar({
                   : "border border-line text-ink hover:bg-soft"
               }`}
             >
-              <span className={`size-2 shrink-0 rounded-full ${active ? "bg-paper/80" : DOTS[b.id]}`} />
+              <span className={`size-2 shrink-0 rounded-full ${active ? "bg-paper/80" : DOTS[i % DOTS.length]}`} />
               {b.name}
             </button>
           );
@@ -145,7 +181,38 @@ export function Sidebar({
         >
           <RotateCcw className="size-3.5" aria-hidden /> Reset demo
         </button>
+        <button
+          onClick={onSignOut}
+          className="inline-flex items-center justify-center gap-1.5 rounded-full border border-line px-3 py-2 text-xs font-medium text-quiet transition-colors hover:bg-soft hover:text-ink focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        >
+          <LogOut className="size-3.5" aria-hidden /> Sign out
+        </button>
       </div>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>New brand memory bank</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={(e) => void create(e)} className="flex flex-col gap-3">
+            <div>
+              <Label htmlFor="brand-name">Brand name</Label>
+              <Input id="brand-name" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Filter Coffee Co." />
+            </div>
+            <div>
+              <Label htmlFor="brand-industry">Industry</Label>
+              <Input id="brand-industry" value={industry} onChange={(e) => setIndustry(e.target.value)} placeholder="Specialty coffee" />
+            </div>
+            <div>
+              <Label htmlFor="brand-tone">Tone of voice</Label>
+              <Input id="brand-tone" value={tone} onChange={(e) => setTone(e.target.value)} placeholder="warm, witty, ritual-led" />
+            </div>
+            <Button type="submit" disabled={saving || !name.trim()}>
+              {saving ? "Creating…" : "Create bank"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </aside>
   );
 }
