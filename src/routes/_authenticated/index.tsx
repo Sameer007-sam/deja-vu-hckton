@@ -236,7 +236,7 @@ function Dashboard() {
         actualCtr: partial.actualCtr,
         outcome: partial.outcome,
         source: "competitor",
-        competitor: partial.competitor,
+        ...(partial.competitor ? { competitor: partial.competitor } : {}),
         year: partial.year,
       });
       setMemories((all) => [saved, ...all]);
