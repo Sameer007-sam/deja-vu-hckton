@@ -14,7 +14,101 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      brands: {
+        Row: {
+          created_at: string
+          id: string
+          industry: string
+          is_demo: boolean
+          name: string
+          tone: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          industry?: string
+          is_demo?: boolean
+          name: string
+          tone?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          industry?: string
+          is_demo?: boolean
+          name?: string
+          tone?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      memories: {
+        Row: {
+          actual_ctr: number | null
+          audience: string
+          body: string
+          brand_id: string
+          channel: string
+          competitor: string | null
+          created_at: string
+          festival: string
+          goal: string
+          hook: string
+          id: string
+          outcome: string
+          predicted_ctr: number | null
+          source: string
+          user_id: string
+          year: number
+        }
+        Insert: {
+          actual_ctr?: number | null
+          audience?: string
+          body?: string
+          brand_id: string
+          channel?: string
+          competitor?: string | null
+          created_at?: string
+          festival?: string
+          goal?: string
+          hook: string
+          id?: string
+          outcome?: string
+          predicted_ctr?: number | null
+          source?: string
+          user_id: string
+          year?: number
+        }
+        Update: {
+          actual_ctr?: number | null
+          audience?: string
+          body?: string
+          brand_id?: string
+          channel?: string
+          competitor?: string | null
+          created_at?: string
+          festival?: string
+          goal?: string
+          hook?: string
+          id?: string
+          outcome?: string
+          predicted_ctr?: number | null
+          source?: string
+          user_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memories_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
