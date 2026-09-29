@@ -1,4 +1,4 @@
-- [ ] Rename the sidebar mark and tune light-mode surfaces to a cream palette.
-- [ ] Add local CSV/JSON campaign-history parsing and validation for the selected brand.
-- [ ] Show a before/after comparison, insights, and a confirmed import into that brand’s memory bank.
+- [x] Rename the sidebar mark and tune light-mode surfaces to a cream palette.
+- [x] Add local CSV/JSON campaign-history parsing and validation for the selected brand.
+- [x] Show a before/after comparison, insights, and a confirmed import into that brand’s memory bank.
 - [ ] Verify import and appearance in the browser; check latest build signal.

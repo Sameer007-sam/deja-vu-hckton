@@ -6,7 +6,7 @@ import type { Brand, Memory } from "@/lib/types";
 
 const average = (rows: { actualCtr: number }[]) => rows.length ? (rows.reduce((sum, row) => sum + row.actualCtr, 0) / rows.length).toFixed(1) : "—";
 
-export function ImportHistory({ brand, existing, onImport }: {
+export function ImportHistory({ brand, existing, totalCount, onImport }: {
   brand: Brand;
   existing: Memory[];
   totalCount: number;
@@ -68,8 +68,8 @@ export function ImportHistory({ brand, existing, onImport }: {
             {baseline !== null && importedAverage !== null && <li>Imported own campaigns average {Math.abs(importedAverage - baseline).toFixed(1)} points {importedAverage >= baseline ? "above" : "below"} the existing bank.</li>}
           </ul>
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            <Button onClick={() => { onImport(selected.rows); setPreview(null); }} disabled={existing.length + selected.rows.length > 200}>Add {selected.rows.length} to {brand.name}</Button>
-            {existing.length + selected.rows.length > 200 && <span className="text-xs text-flop">The memory bank holds 200 campaigns. Choose a smaller file.</span>}
+            <Button onClick={() => { onImport(selected.rows); setPreview(null); }} disabled={totalCount + selected.rows.length > 200}>Add {selected.rows.length} to {brand.name}</Button>
+            {totalCount + selected.rows.length > 200 && <span className="text-xs text-flop">The memory bank holds 200 campaigns across all brands. Choose a smaller file.</span>}
           </div>
         </div>
       )}

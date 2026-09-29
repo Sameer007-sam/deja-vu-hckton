@@ -312,6 +312,7 @@ function Dashboard() {
           <ImportHistory
             brand={brand}
             existing={bank}
+            totalCount={memories.length}
             onImport={(rows) => {
               const now = Date.now();
               const added = rows.map((row, index): Memory => ({ ...row, id: `i_${now}_${index}`, brandId, createdAt: now + index }));
