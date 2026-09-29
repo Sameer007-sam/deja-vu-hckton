@@ -414,7 +414,7 @@ function Dashboard() {
                       actualCtr: row.actualCtr,
                       outcome: row.outcome,
                       source: row.source,
-                      competitor: row.competitor,
+                      ...(row.competitor ? { competitor: row.competitor } : {}),
                       year: row.year,
                     })),
                   );
